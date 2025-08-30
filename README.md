@@ -6,9 +6,9 @@ This guide walks you through jailbreaking, installing required tools, setting up
 ![Sample Kindle weather station photo](Kindle_Weather_Station.jpg)
 
 ⚠️ Disclaimer<br>
-This process modifies your Kindle firmware. Proceed at your own risk.<br>
-Make sure your Kindle model and firmware version are compatible before starting.<br>
-Always keep a backup of your Kindle’s content.
+- This process modifies your Kindle firmware. Proceed at your own risk.
+- Make sure your Kindle model and firmware version are compatible before starting.
+- Always keep a backup of your Kindle’s content.
 
 📋 Requirements
 - A compatible Kindle device (e.g., Paperwhite, Touch, or other 5.x firmware models).
@@ -52,26 +52,26 @@ https://www.mobileread.com/forums/showthread.php?t=225030
 - Copy Update_usbnet_0.22.N_install_touch_pw.bin into the mrpackages folder.
 - Open KUAL → Helper → MR Installer → install USBNet.
 - After installation, go to KUAL → USBNet:
- - Enable WiFi SSH at boot.
- - Disable USB SSH (optional).
+  - Enable WiFi SSH at boot.
+  - Disable USB SSH (optional).
 
 Connect to the Kindle via SSH (replace with Kindle’s IP):
 - ssh root@192.168.x.x
 - On first connection, create an authorized keys file:
- - mkdir -p /mnt/us/usbnet/etc
- - nano /mnt/us/usbnet/etc/authorized_keys
+  - mkdir -p /mnt/us/usbnet/etc
+  - nano /mnt/us/usbnet/etc/authorized_keys
 - Paste your public SSH key, save, and exit.
 - Reboot the Kindle to apply changes.
 
 🌦️ Step 7: Weather Display Script<br>
 Now with SSH session, you can set up a background job that displays weather images.
 - Make system partition writable:
- - mntroot rw<br>
+  - mntroot rw<br>
 - Copy /etc/upstart/startup.conf (included in this repo)
 - Make system partition read-only again:
- - mntroot ro
+  - mntroot ro
 - Copy weather script to /mnt/us/local/bin, and make it executable (included in this repo)
- - update the KINDLE_WEATHER_URL to your web server that can generate the weather station in image format (more in the Reference section below)
+  - update the KINDLE_WEATHER_URL to your web server that can generate the weather station in image format (more in the Reference section below)
 - chmod +x /mnt/us/local/bin/weather<br>
 (This script will use /tmp tmpfs to keep the PNG file updates to avoid wearing out internal storage, it will also disable Kindle native UI so that status bar is not displayed.)
 
