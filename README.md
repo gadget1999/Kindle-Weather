@@ -83,4 +83,5 @@ Reboot the Kindle—your weather image will now refresh every 20 minutes.
 - Once the web server is running, you can use this URL to get the weather info in 600x800 PNG: https://yourserver/kindle_image
 - With the container image, you can provide quotes to display (mine is showing IMDB good movies, but you can use, e.g., quotes of the day)
 
+More detailed step-by-step info can also be found here: [Instructions](https://www.instructables.com/Kindle-Weather-Station/)
 
