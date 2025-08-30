@@ -1,0 +1,23 @@
+#!/usr/bin/env bash
+
+WEATHER_API_PROVIDER_1="NWS"
+WEATHER_API_KEY_1="(Kindle-Weather,your_email@gmail.com)"
+WEATHER_API_PROVIDER_2="Tomorrow"
+WEATHER_API_KEY_2="your-key-here"
+GPS_COORDINATES="41.38,-76.39"
+
+CONTAINER="kindle"
+IMAGE="gadget1999/rpi-nook-weather"
+QUOTE_FILES_DIR=/download/quotes
+
+echo "Starting container..."
+docker run -d --rm --name $CONTAINER \
+ -e WEATHER_API_PROVIDER_1=$WEATHER_API_PROVIDER_1 \
+ -e WEATHER_API_KEY_1=$WEATHER_API_KEY_1 \
+ -e WEATHER_API_PROVIDER_2=$WEATHER_API_PROVIDER_2 \
+ -e WEATHER_API_KEY_2=$WEATHER_API_KEY_2 \
+ -e GPS_COORDINATES=$GPS_COORDINATES \
+ -e QUOTE_FILE=/quotes/quotes.csv \
+ -v $QUOTE_FILES_DIR/quotes:/quotes:ro \
+ -p 8080:8080 \
+ $IMAGE
