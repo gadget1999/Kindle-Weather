@@ -1,0 +1,51 @@
+#!/usr/bin/env bash
+
+# ENV variables
+NOW=$(date +"%Y_%m_%d-%H_%M_%S")
+KINDLE_WEATHER_URL="http://yourserver/kindle_image"
+FBINK_CMD="/mnt/us/usbnet/bin/fbink"
+TMP_FILE="/tmp/kindle.tmp"
+DISPLAY_FILE="/tmp/kindle.png"
+
+update_weather() {
+ # Download the PNG to temp file
+ curl -s -f "$KINDLE_WEATHER_URL" -o "$TMP_FILE"
+
+ # Check if download succeeded
+ if [ $? -eq 0 ]; then
+  # Check if temp file size is larger than 10KB
+  local size=$(stat -c%s "$TMP_FILE" 2>/dev/null)
+  if [ -f "$TMP_FILE" ] && [ "$size" -gt "10240" ]; then
+   echo "PNG file size: $size bytes"
+  else
+   echo "Corrupted PNG file. (Size: $size bytes)"
+   return
+  fi
+
+  # Move temp file to the display file
+  mv "$TMP_FILE" "$DISPLAY_FILE"
+  # Clear screen
+  $FBINK_CMD -c -f -q
+  # Display the PNG
+  echo "$NOW: Updating display"
+  $FBINK_CMD -i "$DISPLAY_FILE" -q
+ else
+  echo "$NOW: Failed to download image from $KINDLE_WEATHER_URL"
+ fi
+}
+
+disable_native_ui() {
+ # stop Kindle framework to disable status bar
+ sleep 10
+ /sbin/stop lab126_gui
+ /sbin/stop framework
+ /sbin/stop otaupd
+ sleep 10
+}
+
+disable_native_ui
+
+while true; do
+ update_weather
+ sleep 1200
+done
