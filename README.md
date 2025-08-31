@@ -73,7 +73,10 @@ Now with SSH session, you can set up a background job that displays weather imag
 - Copy weather script to /mnt/us/local/bin, and make it executable (included in this repo)
   - update the KINDLE_WEATHER_URL to your web server that can generate the weather station in image format (more in the Reference section below)
 - chmod +x /mnt/us/local/bin/weather<br>
-(This script will use /tmp tmpfs to keep the PNG file updates to avoid wearing out internal storage, it will also disable Kindle native UI so that status bar is not displayed.)
+
+A few notes about the weather script:
+- It uses /tmp tmpfs to keep the updated PNG files, to avoid wearing out the internal storage
+- It will also disable Kindle native UI so that status bar is not displayed. (this also reduce memory usage from about 150MB to 40MB)
 
 Reboot the Kindle—your weather image will now refresh every 20 minutes.
 
