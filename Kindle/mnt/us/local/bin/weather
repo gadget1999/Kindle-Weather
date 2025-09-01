@@ -1,14 +1,28 @@
 #!/usr/bin/env bash
 
 # ENV variables
-NOW=$(date +"%Y_%m_%d-%H_%M_%S")
-KINDLE_WEATHER_URL="http://yourserver/kindle_image"
+LOG_FILE="/tmp/weather.log"
+KINDLE_WEATHER_URL="http://iot2.eastus.cloudapp.azure.com:37828/kindle_image"
 FBINK_CMD="/mnt/us/usbnet/bin/fbink"
 TMP_FILE="/tmp/kindle.tmp"
 DISPLAY_FILE="/tmp/kindle.png"
+DISABLE_SYS_UI_FLAG="/tmp/sys_ui_disabled"
+DISABLE_WEATHER_FLAG="/mnt/us/disable-weather"
+
+debug() {
+ local TIMESTAMP=$(date +%Y.%m.%d_%H:%M:%S)
+ echo "$TIMESTAMP $1"
+}
+
+log() {
+ local TIMESTAMP=$(date +%Y.%m.%d_%H:%M:%S)
+ echo "$TIMESTAMP $1"
+ echo "$TIMESTAMP $1" >> $LOG_FILE
+}
 
 update_weather() {
  # Download the PNG to temp file
+ debug "Downloading weather PNG from: $KINDLE_WEATHER_URL"
  curl -s -f "$KINDLE_WEATHER_URL" -o "$TMP_FILE"
 
  # Check if download succeeded
@@ -16,9 +30,9 @@ update_weather() {
   # Check if temp file size is larger than 10KB
   local size=$(stat -c%s "$TMP_FILE" 2>/dev/null)
   if [ -f "$TMP_FILE" ] && [ "$size" -gt "10240" ]; then
-   echo "PNG file size: $size bytes"
+   debug "PNG file size: $size bytes"
   else
-   echo "Corrupted PNG file. (Size: $size bytes)"
+   debug "Corrupted PNG file. (Size: $size bytes)"
    return
   fi
 
@@ -30,35 +44,54 @@ update_weather() {
   echo "$NOW: Updating display"
   $FBINK_CMD -i "$DISPLAY_FILE" -q
  else
-  echo "$NOW: Failed to download image from $KINDLE_WEATHER_URL"
+  debug "Failed to download image."
  fi
 }
 
 disable_native_ui() {
+ if [ -f "$DISABLE_SYS_UI_FLAG" ]; then
+  debug "Native UI alredy stopped, skipping..."
+  return
+ fi
+
+ log "Disable screensaver."
  # Disable sleep
  /usr/bin/lipc-set-prop com.lab126.powerd preventScreenSaver 1
 
+ log "Disable native UI."
  # Stop Kindle framework to disable status bar
  sleep 10
  /sbin/stop lab126_gui
  /sbin/stop framework
  /sbin/stop otaupd
  sleep 10
+
+ # Set flag
+ /bin/touch $DISABLE_SYS_UI_FLAG
 }
 
 enable_native_ui() {
+ if [ ! -f "$DISABLE_SYS_UI_FLAG" ]; then
+  debug "Native UI not stopped, skipping..."
+  return
+ fi
+
+ log "Re-enable native UI and screensaver."
+
  # Start Kindle framework and native UI
  /sbin/start framework
  /sbin/start lab126_gui
 
  # Enable screen saver
  /usr/bin/lipc-set-prop com.lab126.powerd preventScreenSaver 0
+
+ /bin/rm $DISABLE_SYS_UI_FLAG
 }
 
 check_stop_flag() {
  # If stop file is found, skip weather
- if [ -f "/mnt/us/local/stop-weather" ]; then
-  echo "Stop flag detected. Exiting..."
+ if [ -f "$DISABLE_WEATHER_FLAG" ]; then
+  log "Disable weather script flag detected."
   enable_native_ui
   exit 0
  fi
@@ -69,6 +102,7 @@ disable_native_ui
 
 while true; do
  update_weather
+ debug "Sleep for 20 mintues."
  sleep 1200
  check_stop_flag
 done
