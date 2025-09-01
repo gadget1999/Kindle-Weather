@@ -1,6 +1,6 @@
 # Kindle Weather Station
 
-Turn an old Kindle into a 1.5 watts Linux server and always-on e-ink weather station.
+Turn an old Kindle into a 1-watt Linux server and always-on e-ink weather station.
 This guide walks you through jailbreaking, installing required tools, setting up SSH access, and running a script that displays weather images on the Kindle screen.
 
 ![Sample Kindle weather station photo](Kindle_Weather_Station.jpg)
