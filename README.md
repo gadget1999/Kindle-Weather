@@ -77,6 +77,7 @@ Now with SSH session, you can set up a background job that displays weather imag
 A few notes about the weather script:
 - It uses /tmp tmpfs to keep the updated PNG files, to avoid wearing out the internal storage
 - It will also disable Kindle native UI so that status bar is not displayed. (this also reduce memory usage from about 150MB to 40MB)
+- If you need to switch back to native Kindle UI later, just create a file called disable-weather under Kindle root folder
 
 Reboot the Kindle—your weather image will now refresh every 20 minutes.
 
