@@ -35,13 +35,22 @@ update_weather() {
 }
 
 disable_native_ui() {
- # stop Kindle framework to disable status bar
+ # Disable sleep
+ /usr/bin/lipc-set-prop com.lab126.powerd preventScreenSaver 1
+
+ # Stop Kindle framework to disable status bar
  sleep 10
  /sbin/stop lab126_gui
  /sbin/stop framework
  /sbin/stop otaupd
  sleep 10
 }
+
+# If stop file is found, skip weather
+if [ -f "/mnt/us/local/stop-weather" ]; then
+ echo "Stop flag detected. Exiting..."
+ exit 0
+fi
 
 disable_native_ui
 
