@@ -5,7 +5,7 @@ This guide walks you through jailbreaking, installing required tools, setting up
 
 ![Sample Kindle weather station photo](Kindle_Weather_Station.jpg)
 
-⚠️ Disclaimer<br>
+⚠️ Disclaimer
 - This process modifies your Kindle firmware. Proceed at your own risk.
 - Make sure your Kindle model and firmware version are compatible before starting.
 - Always keep a backup of your Kindle’s content.
@@ -57,31 +57,31 @@ https://www.mobileread.com/forums/showthread.php?t=225030
 
 Connect to the Kindle via SSH (replace with Kindle’s IP):
 - ssh root@192.168.x.x
-- On first connection, create an authorized keys file:
+- (Optional) On first connection, create an authorized keys file:
   - mkdir -p /mnt/us/usbnet/etc
   - nano /mnt/us/usbnet/etc/authorized_keys
-- Paste your public SSH key, save, and exit.
+    - Paste your public SSH key, save, and exit.
 - Reboot the Kindle to apply changes.
 
 🌦️ Step 7: Weather Display Script<br>
 Now with SSH session, you can set up a background job that displays weather images.
 - Make system partition writable:
-  - mntroot rw<br>
+  - mntroot rw
 - Copy /etc/upstart/startup.conf (included in this repo)
 - Make system partition read-only again:
   - mntroot ro
 - Copy weather script to /mnt/us/local/bin, and make it executable (included in this repo)
   - update the KINDLE_WEATHER_URL to your web server that can generate the weather station in image format (more in the Reference section below)
-- chmod +x /mnt/us/local/bin/weather<br>
+- chmod +x /mnt/us/local/bin/weather
 
 A few notes about the weather script:
 - It uses /tmp tmpfs to keep the updated PNG files, to avoid wearing out the internal storage
 - It will also disable Kindle native UI so that status bar is not displayed. (this also reduce memory usage from about 150MB to 40MB)
-- If you need to switch back to native Kindle UI later, just create a file called disable-weather under Kindle root folder
+- If you need to switch back to native Kindle UI later, just create a file called 'disable-weather' under Kindle root folder
 
 Reboot the Kindle—your weather image will now refresh every 20 minutes.
 
-🔗 References<br>
+🔗 References
 - For web server to render weather information, you can use this Docker image: [Weather station web server container image](https://hub.docker.com/r/gadget1999/rpi-nook-weather)
   - An example script to run the image can be found in the repo: [Run weather web server container](Server/weather-container)
 - Once the web server is running, you can use this URL to get the weather info in 600x800 PNG: https://yourserver/kindle_image
