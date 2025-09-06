@@ -84,7 +84,8 @@ Reboot the Kindle—your weather image will now refresh every 20 minutes.
 🔗 References
 - For web server to render weather information, you can use this Docker image: [Weather station web server container image](https://hub.docker.com/r/gadget1999/rpi-nook-weather)
   - An example script to run the image can be found in the repo: [Run weather web server container](Server/weather-container)
-- Once the web server is running, you can use this URL to get the weather info in 600x800 PNG: https://yourserver/kindle_image
+- Once the web server is running, you can use this URL to get the weather info in 600x800 PNG:
+  - https://yourserver/kindle_image?gps_coordinates=39.7128,-76.0060⁠ (replace with your GPS coordinates)
 - With the container image, you can provide quotes to display (mine is showing IMDB good movies, but you can use, e.g., quotes of the day)
 
 More detailed step-by-step info can also be found here: [Instructions](https://www.instructables.com/Kindle-Weather-Station/)
