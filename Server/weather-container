@@ -4,6 +4,7 @@ WEATHER_API_PROVIDER_1="NWS"
 WEATHER_API_KEY_1="(Kindle-Weather,your_email@gmail.com)"
 WEATHER_API_PROVIDER_2="Tomorrow"
 WEATHER_API_KEY_2="your-key-here"
+# GPS_COORDINATES is the default GPS coordinates (optional)
 GPS_COORDINATES="41.38,-76.39"
 
 CONTAINER="kindle"
