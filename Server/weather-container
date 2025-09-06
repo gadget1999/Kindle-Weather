@@ -1,14 +1,20 @@
 #!/usr/bin/env bash
 
+# A script example to show how to run the weather docker container
+
 WEATHER_API_PROVIDER_1="NWS"
 WEATHER_API_KEY_1="(Kindle-Weather,your_email@gmail.com)"
 WEATHER_API_PROVIDER_2="Tomorrow"
 WEATHER_API_KEY_2="your-key-here"
-# GPS_COORDINATES is the default GPS coordinates (optional)
+
+# GPS_COORDINATES is the default GPS coordinates (optional, remove if no need)
 GPS_COORDINATES="41.38,-76.39"
 
 CONTAINER="kindle"
 IMAGE="gadget1999/rpi-nook-weather"
+
+# If you want to use your own quotes CSV instead of the default jokes, you can map it here
+# Otherwise, remove following line and the "-e QUOTE_FILE" and "-v $QUOTE_FILES_DIR" lines below
 QUOTE_FILES_DIR=/download/quotes
 
 echo "Starting container..."
@@ -18,7 +24,7 @@ docker run -d --rm --name $CONTAINER \
  -e WEATHER_API_PROVIDER_2=$WEATHER_API_PROVIDER_2 \
  -e WEATHER_API_KEY_2=$WEATHER_API_KEY_2 \
  -e GPS_COORDINATES=$GPS_COORDINATES \
- -e QUOTE_FILE=/quotes/quotes.csv \
- -v $QUOTE_FILES_DIR/quotes:/quotes:ro \
+ -e QUOTE_FILE=/custom-quotes/your-quotes.csv \
+ -v $QUOTE_FILES_DIR:/custom-quotes:ro \
  -p 8080:8080 \
  $IMAGE
