@@ -1,0 +1,2 @@
+# Add this line before /usr/local/Kobo/hindenburg (staring Kobo UI)
+/mnt/onboard/.adds/weather &
