@@ -1,23 +1,137 @@
 #!/bin/sh
 
-WPA_CONF="/etc/wpa_supplicant.conf"
+# Configuration
+PING_TARGET="8.8.8.8"
+CHECK_INTERVAL=20
+FAILURE_THRESHOLD=6
+INTERFACE="wlan0"
+MAX_RECONNECT_ATTEMPTS=10
+LOG_FILE="/tmp/keep-wifi.log"
+WPA_CLI_CMD="/bin/wpa_cli"
 
-wifi_restart() {
- echo "[Watchdog] Restarting Wi-Fi..."
- killall wpa_supplicant 2>/dev/null
- killall udhcpc 2>/dev/null
- ifconfig wlan0 down
- ifconfig wlan0 up
- iwconfig wlan0 power off
- wpa_supplicant -B -Dwext -iwlan0 -c $WPA_CONF
- udhcpc -i wlan0
+# Logging functions
+
+debug() {
+ local TIMESTAMP=$(date +%Y.%m.%d_%H:%M:%S)
+ echo "$TIMESTAMP $1"
 }
 
-# Loop forever, checking every 30 seconds
-while true; do
- ping -c1 8.8.8.8 >/dev/null 2>&1
- if [ $? -ne 0 ]; then
-  wifi_restart
+log() {
+ local TIMESTAMP=$(date +%Y.%m.%d_%H:%M:%S)
+ echo "$TIMESTAMP $1"
+ echo "$TIMESTAMP $1" >> $LOG_FILE
+}
+
+# Counters
+
+failure_count=0
+reconnect_attempts=0
+wifi_disabled=0
+
+reset_counters() {
+ if [ $failure_count -gt 0 ] || [ $reconnect_attempts -gt 0 ] || [ $wifi_disabled -eq 1 ]; then
+  failure_count=0
+  reconnect_attempts=0
+  wifi_disabled=0
  fi
- sleep 60
+}
+
+# Function to check if WiFi has IP address using wpa_cli
+has_ip_address() {
+ ip_check=$($WPA_CLI_CMD -i $INTERFACE status 2>/dev/null | grep "ip_address")
+ if [ -n "$ip_check" ] && echo "$ip_check" | grep -qv "ip_address=0.0.0.0"; then
+  return 0  # Has valid IP
+ else
+  return 1  # No IP or invalid IP
+ fi
+}
+
+# Function to check WiFi connection state using wpa_cli
+is_wifi_connected() {
+ state=$($WPA_CLI_CMD -i $INTERFACE status 2>/dev/null | grep "wpa_state" | cut -d= -f2)
+ if [ "$state" = "COMPLETED" ] && has_ip_address; then
+  return 0  # Connected with IP
+ else
+  return 1  # Not connected or no IP
+ fi
+}
+
+reconnect_wifi() {
+ if [ $wifi_disabled -eq 1 ]; then
+  # WiFi intentionally disabled, skip
+  return 0
+ fi
+
+ reconnect_attempts=$((reconnect_attempts + 1))
+ log "Attempting WiFi reconnect... ($reconnect_attempts)"
+ 
+ # First check current status
+ if is_wifi_connected; then
+  log "WiFi already connected according to wpa_cli, but ping failing. Continuing..."
+  failure_count=0
+  return 0
+ fi
+ 
+ # Disconnect first
+ debug "Disconnecting..."
+ $WPA_CLI_CMD -i $INTERFACE disconnect >/dev/null 2>&1
+ sleep 3
+ 
+ # Reconnect
+ debug "Reconnecting..."
+ $WPA_CLI_CMD -i $INTERFACE reconnect >/dev/null 2>&1
+ sleep 5
+ 
+ # Check if reconnection was successful by getting IP
+ if ! has_ip_address; then
+  debug "Reconnect failed - no IP address. Requesting new IP..."
+  $WPA_CLI_CMD -i $INTERFACE reassociate >/dev/null 2>&1
+  sleep 3
+  $WPA_CLI_CMD -i $INTERFACE reconfigure >/dev/null 2>&1
+  sleep 2
+ fi
+ 
+ # Final status check
+ if is_wifi_connected; then
+  log "Reconnect successful - WiFi connected with IP address"
+ else
+  log "Reconnect failed - still not connected according to wpa_cli"
+  
+  # Check if we've exceeded max reconnect attempts
+  if [ $reconnect_attempts -ge $MAX_RECONNECT_ATTEMPTS ]; then
+   log "WARNING: Exceeded $MAX_RECONNECT_ATTEMPTS reconnect attempts. WiFi may be disabled or unavailable."
+   debug "Will continue ping monitoring but will not attempt further reconnects."
+   wifi_disabled=1
+  fi
+ fi
+ 
+ # Reset failure count after reconnect attempt
+ failure_count=0
+}
+
+# Main monitoring loop
+while true; do
+ # Always ping first - if successful, just sleep and continue
+ if ping -c 1 -W 5 $PING_TARGET >/dev/null 2>&1; then
+  # since network is on, reset all counters
+  reset_counters
+  sleep $CHECK_INTERVAL
+  continue
+ fi
+ 
+ # Check WiFi state to determine if it's a WiFi issue or internet issue
+ if ! wifi_has_ip || ! wifi_is_connected; then
+  failure_count=$((failure_count + 1))
+ else
+  # Don't count as WiFi failure if WiFi is technically connected
+  failure_count=0
+ fi
+ 
+ # Check if we need to reconnect (only if WiFi actually has issues)
+ if [ $failure_count -ge $FAILURE_THRESHOLD ] && [ $wifi_disabled -eq 0 ] && (! wifi_has_ip || ! wifi_is_connected); then
+  reconnect_wifi
+ fi
+ 
+ # Wait for next check
+ sleep $CHECK_INTERVAL
 done
