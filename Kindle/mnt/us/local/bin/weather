@@ -2,7 +2,7 @@
 
 # ENV variables
 LOG_FILE="/tmp/weather.log"
-KINDLE_WEATHER_URL="http://iot2.eastus.cloudapp.azure.com:37828/kindle_image"
+KINDLE_WEATHER_URL="https://yourserver:port/kindle_image?gps_coordinates=30.58,-75.65"
 FBINK_CMD="/mnt/us/usbnet/bin/fbink"
 TMP_FILE="/tmp/kindle.tmp"
 DISPLAY_FILE="/tmp/kindle.png"
