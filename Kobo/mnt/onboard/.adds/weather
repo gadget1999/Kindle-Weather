@@ -60,6 +60,9 @@ check_stop_flag() {
 
 check_stop_flag
 
+# Disable Wi-Fi power saving mode to avoid network drops
+/sbin/iwconfig wlan0 power off
+
 while true; do
  update_weather
  debug "Sleep for 20 mintues."
