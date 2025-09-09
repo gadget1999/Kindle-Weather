@@ -2,8 +2,10 @@
 
 # ENV variables
 LOG_FILE="/tmp/weather.log"
-KINDLE_WEATHER_URL="http://yourserver:port/kindle_image?gps_coordinates=38.58,-75.65"
+KINDLE_WEATHER_URL="https://yourserver:port/kindle_image?gps_coordinates=37.58,-76.65"
 FBINK_CMD="/usr/bin/fbink"
+KEEP_WIFI_CMD="/mnt/onboard/.adds/keep-wifi"
+WAIT_INTERNET_CMD="/mnt/onboard/.adds/wait-internet"
 TMP_FILE="/tmp/kindle.tmp"
 DISPLAY_FILE="/tmp/kindle.png"
 DISABLE_WEATHER_FLAG="/mnt/onboard/disable-weather"
@@ -21,7 +23,7 @@ log() {
 
 update_weather() {
  # Wait for internet
- /mnt/onboard/.adds/wait-internet
+ $WAIT_INTERNET_CMD
 
  # Download the PNG to temp file
  debug "Downloading weather PNG from: $KINDLE_WEATHER_URL"
@@ -59,9 +61,7 @@ check_stop_flag() {
 }
 
 check_stop_flag
-
-# Disable Wi-Fi power saving mode to avoid network drops
-/sbin/iwconfig wlan0 power off
+$KEEP_WIFI_CMD &
 
 while true; do
  update_weather
