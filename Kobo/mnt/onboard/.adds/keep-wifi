@@ -1,0 +1,23 @@
+#!/bin/sh
+
+WPA_CONF="/etc/wpa_supplicant.conf"
+
+wifi_restart() {
+ echo "[Watchdog] Restarting Wi-Fi..."
+ killall wpa_supplicant 2>/dev/null
+ killall udhcpc 2>/dev/null
+ ifconfig wlan0 down
+ ifconfig wlan0 up
+ iwconfig wlan0 power off
+ wpa_supplicant -B -Dwext -iwlan0 -c $WPA_CONF
+ udhcpc -i wlan0
+}
+
+# Loop forever, checking every 30 seconds
+while true; do
+ ping -c1 8.8.8.8 >/dev/null 2>&1
+ if [ $? -ne 0 ]; then
+  wifi_restart
+ fi
+ sleep 60
+done
