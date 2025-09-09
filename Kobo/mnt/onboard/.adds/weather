@@ -1,0 +1,68 @@
+#!/bin/sh
+
+# ENV variables
+LOG_FILE="/tmp/weather.log"
+KINDLE_WEATHER_URL="http://yourserver:port/kindle_image?gps_coordinates=38.58,-75.65"
+FBINK_CMD="/usr/bin/fbink"
+TMP_FILE="/tmp/kindle.tmp"
+DISPLAY_FILE="/tmp/kindle.png"
+DISABLE_WEATHER_FLAG="/mnt/onboard/disable-weather"
+
+debug() {
+ local TIMESTAMP=$(date +%Y.%m.%d_%H:%M:%S)
+ echo "$TIMESTAMP $1"
+}
+
+log() {
+ local TIMESTAMP=$(date +%Y.%m.%d_%H:%M:%S)
+ echo "$TIMESTAMP $1"
+ echo "$TIMESTAMP $1" >> $LOG_FILE
+}
+
+update_weather() {
+ # Wait for internet
+ /mnt/onboard/.adds/wait-internet
+
+ # Download the PNG to temp file
+ debug "Downloading weather PNG from: $KINDLE_WEATHER_URL"
+ wget -q -O "$TMP_FILE" "$KINDLE_WEATHER_URL"
+
+ # Check if download succeeded
+ if [ $? -eq 0 ]; then
+  # Check if temp file size is larger than 10KB
+  local size=$(stat -c%s "$TMP_FILE" 2>/dev/null)
+  if [ -f "$TMP_FILE" ] && [ "$size" -gt "10240" ]; then
+   debug "PNG file size: $size bytes"
+  else
+   debug "Corrupted PNG file. (Size: $size bytes)"
+   return
+  fi
+
+  # Move temp file to the display file
+  mv "$TMP_FILE" "$DISPLAY_FILE"
+  # Clear screen
+  $FBINK_CMD -c -f -q
+  # Display the PNG
+  echo "$NOW: Updating display"
+  $FBINK_CMD -i "$DISPLAY_FILE" -q
+ else
+  debug "Failed to download image."
+ fi
+}
+
+check_stop_flag() {
+ # If stop file is found, skip weather
+ if [ -f "$DISABLE_WEATHER_FLAG" ]; then
+  log "Disable weather script flag detected."
+  exit 0
+ fi
+}
+
+check_stop_flag
+
+while true; do
+ update_weather
+ debug "Sleep for 20 mintues."
+ sleep 1200
+ check_stop_flag
+done
