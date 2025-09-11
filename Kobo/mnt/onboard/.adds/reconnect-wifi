@@ -1,0 +1,43 @@
+#!/bin/sh
+
+# Wi-Fi reconnect script for Kobo
+# Uses only wpa_cli + fbink
+
+FBINK="/mnt/onboard/.adds/fbink"   # adjust if needed
+LINE=0                             # track line number for printing
+
+log() {
+    MSG="$1"
+    echo "$MSG"
+    # Print message at next line, wrap if long
+    $FBINK -q -y "$LINE" -w "$MSG"
+    LINE=$((LINE + 1))
+}
+
+# Clear screen first
+$FBINK -c
+
+# Check if IP already assigned
+if ip route | grep -q '^default'; then
+    IP=$(ip addr show wlan0 | awk '/inet / {print $2}' | head -n1)
+    log "Already connected. IP: $IP"
+    exit 0
+fi
+
+log "No IP. Running wpa_cli reconnect..."
+wpa_cli reconnect >/dev/null 2>&1
+
+TRIES=0
+while [ $TRIES -lt 6 ]; do
+    if ip route | grep -q '^default'; then
+        IP=$(ip addr show wlan0 | awk '/inet / {print $2}' | head -n1)
+        log "Connected! IP: $IP"
+        exit 0
+    fi
+    TRIES=$((TRIES + 1))
+    log "Still no IP... attempt $TRIES/6"
+    sleep 10
+done
+
+log "Failed to get IP after 1 min."
+exit 1
