@@ -1,14 +1,17 @@
 #!/usr/bin/env bash
 
+CMD_PATH=$(dirname "$0")
+source $CMD_PATH/.env
+
 # ENV variables
 LOG_FILE="/tmp/weather.log"
-KINDLE_WEATHER_URL="http://your-server:port/kindle_image?gps_coordinates=38.58,-76.65"
 FBINK_CMD="/mnt/us/usbnet/bin/fbink"
 TMP_FILE="/tmp/kindle.tmp"
 DISPLAY_FILE="/tmp/kindle.png"
 DISABLE_SYS_UI_FLAG="/tmp/sys_ui_disabled"
 DISABLE_WEATHER_FLAG="/mnt/us/disable-weather"
-FULL_REFRESH_INTERVAL=5
+FULL_REFRESH_INTERVAL=6
+WEATHER_FETCH_INTERVAL=1200  # 20 minutes
 
 debug() {
  local TIMESTAMP=$(date +%Y.%m.%d_%H:%M:%S)
@@ -58,7 +61,7 @@ display_weather() {
   $FBINK_CMD -i "$DISPLAY_FILE" -f -q
  else
   debug "Display image: $DISPLAY_FILE"
-  $FBINK_CMD -i "$DISPLAY_FILE" -q
+  $FBINK_CMD -g "file=$DISPLAY_FILE" -q
  fi
  full_refresh_counter=$(( (full_refresh_counter + 1) % $FULL_REFRESH_INTERVAL ))
 }
@@ -118,7 +121,7 @@ disable_native_ui
 while true; do
  download_weather
  display_weather
- debug "Sleep for 20 mintues."
- sleep 1200
+ debug "Sleep for $WEATHER_FETCH_INTERVAL seconds."
+ sleep $WEATHER_FETCH_INTERVAL
  check_stop_flag
 done
